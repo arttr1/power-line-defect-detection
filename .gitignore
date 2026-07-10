@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Веса моделей — хранятся на Hugging Face Hub, не в git (см. README)
+models/*.pt
+
+.ipynb_checkpoints/
+
+.DS_Store
+*.log
+
+runs/
