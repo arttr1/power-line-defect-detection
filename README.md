@@ -94,7 +94,7 @@ BACKEND_MODE=http BACKEND_URL=http://localhost:8000 streamlit run app.py
 
 ## Метрики и оценка
 
-Итоговый mAP@0.5 по каждой модели — в `notebooks/train_vehicle_detection.ipynb` (секция 5) и `models/metrics_summary.csv`. Там же графики сравнения (mAP@0.5, mAP@0.5:0.95, время обучения) и кривые обучения для каждой модели.
+Итоговый mAP@0.5 по каждой модели на отложенном test split VisDrone: YOLOv8n — 0.261, YOLOv8s — 0.319, YOLOv8m — 0.360. Полный отчёт с метриками по классам, графиками и анализом результатов — в [`docs/REPORT.md`](docs/REPORT.md). Исходные данные — в `notebooks/train_vehicle_detection.ipynb` (секция 5) и `models/metrics_summary.csv`.
 
 ## Чек-лист требований продуктового трека
 
