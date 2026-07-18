@@ -40,8 +40,14 @@ def _ensure_weights_downloaded(weights_path: Path, filename: str) -> None:
     from huggingface_hub import hf_hub_download
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    downloaded = hf_hub_download(repo_id=HF_REPO_ID, filename=filename)
-    Path(downloaded).replace(weights_path)
+    try:
+        downloaded = hf_hub_download(repo_id=HF_REPO_ID, filename=filename)
+        Path(downloaded).replace(weights_path)
+    except Exception as exc:
+        raise ModelNotFoundError(
+            f"Не удалось скачать веса '{filename}' из HF репозитория '{HF_REPO_ID}': "
+            f"{type(exc).__name__}: {exc}"
+        ) from exc
 
 
 @dataclass
