@@ -21,7 +21,16 @@ BACKEND_MODE = os.environ.get("BACKEND_MODE", "http")
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 
 if BACKEND_MODE == "embedded":
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
+    # When this file is executed directly (`streamlit run frontend/app.py`), __file__
+    # is set and we can resolve the backend path ourselves. When it's exec()'d from
+    # streamlit_app.py (Streamlit Cloud / Render entrypoint), __file__ is not defined
+    # here — that entrypoint is responsible for putting backend/ on sys.path instead.
+    try:
+        backend_dir = str(Path(__file__).resolve().parent.parent / "backend")
+        if backend_dir not in sys.path:
+            sys.path.insert(0, backend_dir)
+    except NameError:
+        pass
     from inference import ModelNotFoundError, list_available_models, run_inference  # noqa: E402
 
 CLASS_COLORS = {
