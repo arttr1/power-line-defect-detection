@@ -6,7 +6,7 @@
 
 ## Демо
 
-Ссылка на приложение на Streamlit Cloud: `TODO — добавить после деплоя`
+Приложение: https://vehicle-detection-4uid.onrender.com
 Видео-презентация: `TODO — добавить ссылку`
 
 ## Архитектура
@@ -23,10 +23,10 @@ power-line-defect-detection/
 ├── backend/            # FastAPI: main.py (роуты), inference.py (общая логика инференса)
 ├── frontend/           # Streamlit: app.py
 ├── notebooks/          # Colab-ноутбук обучения моделей
-├── models/             # .pt веса (не хранятся в git, см. ниже)
-├── streamlit_app.py    # entrypoint для Streamlit Cloud
+├── models/             # .pt веса моделей (хранятся в git, см. ниже)
+├── streamlit_app.py    # entrypoint для деплоя (embedded-режим)
 ├── docker-compose.yml  # локальный запуск backend + frontend
-└── requirements.txt    # зависимости для Streamlit Cloud (корневой entrypoint)
+└── requirements.txt    # зависимости для деплоя (корневой entrypoint)
 ```
 
 ## Модели
@@ -43,11 +43,11 @@ power-line-defect-detection/
 
 ## Хранение весов моделей
 
-Веса `.pt` не хранятся в git (см. `.gitignore`) — файлы YOLOv8 после дообучения занимают десятки мегабайт, GitHub для этого не предназначен. Вместо этого:
+Веса `.pt` (суммарно ~81 МБ на все три модели) хранятся прямо в git, в `models/`. Это осознанный компромисс: платформы с эфемерной файловой системой на бесплатном тарифе (например, Render Free) не гарантируют, что файл, скачанный во время выполнения запроса, переживёт следующий рестарт процесса — скачивание "по требованию" с Hugging Face Hub при каждом холодном старте оказалось ненадёжным. Хранение весов в репозитории убирает эту точку отказа.
 
-1. После обучения в Colab веса заливаются на [Hugging Face Hub](https://huggingface.co/) (см. последнюю секцию ноутбука).
-2. `backend/inference.py` при первом обращении к модели скачивает веса с Hub автоматически, если задана переменная окружения `HF_REPO_ID`.
-3. Для локальной разработки можно просто положить `.pt` файлы в `models/` вручную — тогда `HF_REPO_ID` не нужен.
+1. После обучения в Colab веса опционально заливаются на [Hugging Face Hub](https://huggingface.co/) (см. последнюю секцию ноутбука) — как резервная копия и для скачивания вне репозитория.
+2. `backend/inference.py` в первую очередь ищет веса локально в `models/`. Если файла нет и задана переменная окружения `HF_REPO_ID`, делается попытка скачать его с Hub — это резервный путь для сред с постоянной файловой системой.
+3. После обучения новых моделей замените `.pt` файлы в `models/` и закоммитьте изменения.
 
 ## Обучение моделей
 
@@ -82,15 +82,17 @@ pip install -r requirements.txt
 BACKEND_MODE=http BACKEND_URL=http://localhost:8000 streamlit run app.py
 ```
 
-## Деплой на Streamlit Community Cloud
+## Деплой на Render
+
+Streamlit Community Cloud (share.streamlit.io) на момент написания недоступен по сети из региона разработки, поэтому приложение развёрнуто на [Render](https://render.com) как обычный Web Service:
 
 1. Запушьте репозиторий на GitHub (публичный).
-2. На [share.streamlit.io](https://share.streamlit.io) создайте новое приложение, укажите репозиторий и главный файл — `streamlit_app.py` (не `frontend/app.py`).
-3. В настройках приложения (Advanced settings → Secrets) добавьте:
-   ```toml
-   HF_REPO_ID = "your-username/vehicle-detection-yolov8"
-   ```
-4. Приложение автоматически поставит зависимости из корневого `requirements.txt` и при первом запросе скачает веса моделей с Hugging Face Hub.
+2. На [dashboard.render.com](https://dashboard.render.com) создайте New → Web Service, укажите публичный URL репозитория.
+3. Настройки сборки:
+   - Build command: `pip install -r requirements.txt`
+   - Start command: `streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0`
+4. Веса моделей уже в репозитории (`models/`), поэтому `HF_REPO_ID` задавать не обязательно — но можно оставить как резервный путь.
+5. Бесплатный тариф Render (512 МБ RAM) укладывает YOLOv8n/s/m, но инстанс засыпает после 15 минут простоя — первый запрос после паузы будет медленнее.
 
 ## Метрики и оценка
 
@@ -103,5 +105,5 @@ BACKEND_MODE=http BACKEND_URL=http://localhost:8000 streamlit run app.py
 - [x] Frontend (Streamlit)
 - [x] Выбор из ≥2 моделей (быстрая/точная) — реализовано 3
 - [x] Репозиторий на GitHub
+- [x] Деплой (Render): https://vehicle-detection-4uid.onrender.com
 - [ ] Видео-презентация — добавить ссылку после записи
-- [ ] Деплой на Streamlit Cloud — добавить ссылку после деплоя
